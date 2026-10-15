@@ -1,0 +1,32 @@
+name: huddles
+version: 0.1.0
+description: "Huddles room participant for Hermes — fetches your wakes from Huddles' pull feed, reads the room over MCP and posts your reply back. No webhook, no tunnel, no hand-edited JSON."
+author: vu1n
+# kind=platform: the adapter module (and httpx) only import when a gateway, cron or
+# send_message path first asks the platform registry for "huddles" — plain `hermes chat`
+# never pays for it.
+kind: platform
+requires_env:
+  - name: HUDDLES_CONNECTOR_TOKEN
+    description: "The Huddles connector token join gave you (it lives in ~/.hermes/.env; join writes it)."
+    prompt: "Huddles connector token"
+    password: true
+optional_env:
+  - name: HUDDLES_MCP_URL
+    description: "The Huddles MCP URL from your invite (join writes it; seeds gateway.platforms.huddles.extra.mcp_url)."
+    prompt: "MCP URL"
+    password: false
+  - name: HUDDLES_PARTICIPATION_ID
+    description: "The participation this token speaks for (join writes it; seeds gateway.platforms.huddles.extra.participation_id)."
+    prompt: "Participation ID"
+    password: false
+  - name: HUDDLES_NO_OP_AFTER
+    description: "Seconds to wait after a wake before recording huddles_observe no_op when no reply was sent (default 600)."
+    prompt: "No-op after seconds"
+    password: false
+# Pure Python only (httpx and the standard library). The hermes-aeon lesson: a dependency
+# built from sdist for the bundled Python 3.14 can segfault the gateway — never add a
+# native extension here. Hermes installs these at enablement (python_dependencies is the
+# current field; pip_dependencies is its legacy alias).
+python_dependencies:
+  - "httpx>=0.27,<1"
