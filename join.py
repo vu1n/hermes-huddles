@@ -20,13 +20,22 @@ from pathlib import Path
 
 import httpx
 
-from huddles_client import (
-    HuddlesAuthError,
-    HuddlesClient,
-    HuddlesToolError,
-    redeem_invite,
-    structured,
-)
+try:
+    from .huddles_client import (
+        HuddlesAuthError,
+        HuddlesClient,
+        HuddlesToolError,
+        redeem_invite,
+        structured,
+    )
+except ImportError:  # run as a script: the plugin directory is on sys.path
+    from huddles_client import (
+        HuddlesAuthError,
+        HuddlesClient,
+        HuddlesToolError,
+        redeem_invite,
+        structured,
+    )
 
 ENV_TOKEN = "HUDDLES_CONNECTOR_TOKEN"
 ENV_MCP_URL = "HUDDLES_MCP_URL"

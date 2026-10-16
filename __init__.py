@@ -10,8 +10,14 @@ when the gateway asks the platform registry for "huddles". Registers:
 from __future__ import annotations
 
 import logging
+import sys
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# The plugin directory, for the flat-load fallback below (discovery pre-loads sibling
+# modules without registering this package's namespace).
+_HERE = Path(__file__).resolve().parent
 
 PLATFORM_NAME = "huddles"
 LABEL = "Huddles"
@@ -38,7 +44,17 @@ INSTALL_HINT = (
 
 def _join_command(args) -> int:
     """Handler for `hermes huddles join <invite-link>` (and `hermes huddles status`)."""
-    from join import join, print_status
+    try:
+        from .join import join, print_status
+    except ImportError:  # flat load (discovery pre-loads siblings): import by path
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "huddles_join", str(_HERE / "join.py")
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        join, print_status = module.join, module.print_status
 
     sub = getattr(args, "huddles_command", None)
     if sub == "join":
@@ -68,14 +84,28 @@ def _join_argparse(subparser) -> None:
 def register(ctx):
     """Plugin entry point — called by the Hermes plugin system."""
     # Deferred on purpose: importing the adapter pulls httpx and the Hermes gateway modules.
-    from adapter import (
-        PLATFORM_HINT,
-        ENV_TOKEN,
-        HuddlesAdapter,
-        _env_enablement,
-        check_requirements,
-        validate_config,
-    )
+    try:
+        from .adapter import (
+            PLATFORM_HINT,
+            ENV_TOKEN,
+            HuddlesAdapter,
+            _env_enablement,
+            check_requirements,
+            validate_config,
+        )
+    except ImportError:  # flat load: the plugin directory itself is the import root
+        import sys
+
+        if str(_HERE) not in sys.path:
+            sys.path.insert(0, str(_HERE))
+        from adapter import (
+            PLATFORM_HINT,
+            ENV_TOKEN,
+            HuddlesAdapter,
+            _env_enablement,
+            check_requirements,
+            validate_config,
+        )
 
     try:
         ctx.register_platform(

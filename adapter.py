@@ -17,12 +17,20 @@ from gateway.platforms.base import BasePlatformAdapter, SendResult
 from gateway.platforms.event import MessageEvent, MessageType
 from gateway.status import acquire_scoped_lock, release_scoped_lock
 
-from huddles_client import HuddlesClient
-from huddles_loop import (
-    DEFAULT_NO_OP_AFTER_SECONDS,
-    DEFAULT_WAIT_SECONDS,
-    HuddlesWakeLoop,
-)
+try:
+    from .huddles_client import HuddlesClient
+    from .huddles_loop import (
+        DEFAULT_NO_OP_AFTER_SECONDS,
+        DEFAULT_WAIT_SECONDS,
+        HuddlesWakeLoop,
+    )
+except ImportError:  # flat load: siblings are top-level modules
+    from huddles_client import HuddlesClient
+    from huddles_loop import (
+        DEFAULT_NO_OP_AFTER_SECONDS,
+        DEFAULT_WAIT_SECONDS,
+        HuddlesWakeLoop,
+    )
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,10 @@ import time
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
-from huddles_client import HuddlesAuthError, HuddlesClient, Wake
+try:
+    from .huddles_client import HuddlesAuthError, HuddlesClient, Wake
+except ImportError:  # flat load
+    from huddles_client import HuddlesAuthError, HuddlesClient, Wake
 
 logger = logging.getLogger(__name__)
 
