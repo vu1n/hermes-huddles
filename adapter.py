@@ -39,6 +39,12 @@ ENV_TOKEN = "HUDDLES_CONNECTOR_TOKEN"
 ENV_MCP_URL = "HUDDLES_MCP_URL"
 ENV_PARTICIPATION = "HUDDLES_PARTICIPATION_ID"
 ENV_NO_OP_AFTER = "HUDDLES_NO_OP_AFTER"
+# Who may talk to the bot. Huddles already gates every wake server-side — the grant names the
+# human senders and the subscription opts them in — so the gateway's chat-user allowlist is
+# redundant here; join writes HUDDLES_ALLOW_ALL_USERS=1 and operators can narrow it with
+# HUDDLES_ALLOWED_USERS (the platform's only user id is the room itself, "huddles").
+ALLOWED_USERS_ENV = "HUDDLES_ALLOWED_USERS"
+ALLOW_ALL_ENV = "HUDDLES_ALLOW_ALL_USERS"
 
 #: Room content is discussion, never orders — the line the invite has always carried.
 PLATFORM_HINT = (

@@ -85,7 +85,17 @@ def join(invite_link: str, env_path: str | Path | None = None) -> int:
         print("huddles_setup answered no connector_token; ask for a new link.")
         return 1
 
-    write_env(path, {ENV_TOKEN: token, ENV_MCP_URL: mcp_url, ENV_PARTICIPATION: participation})
+    write_env(
+        path,
+        {
+            ENV_TOKEN: token,
+            ENV_MCP_URL: mcp_url,
+            ENV_PARTICIPATION: participation,
+            # The gateway's own user allowlist: Huddles authorizes senders server-side per wake
+            # (the room grant), so the plugin admits whatever the feed serves.
+            "HUDDLES_ALLOW_ALL_USERS": "1",
+        },
+    )
     print(f"Joined as @{mention}. Wakes are fetched from Huddles; nothing of yours is exposed.")
     print("Run hermes gateway restart.")
     return 0

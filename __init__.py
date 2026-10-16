@@ -86,6 +86,8 @@ def register(ctx):
     # Deferred on purpose: importing the adapter pulls httpx and the Hermes gateway modules.
     try:
         from .adapter import (
+            ALLOW_ALL_ENV,
+            ALLOWED_USERS_ENV,
             PLATFORM_HINT,
             ENV_TOKEN,
             HuddlesAdapter,
@@ -99,6 +101,8 @@ def register(ctx):
         if str(_HERE) not in sys.path:
             sys.path.insert(0, str(_HERE))
         from adapter import (
+            ALLOW_ALL_ENV,
+            ALLOWED_USERS_ENV,
             PLATFORM_HINT,
             ENV_TOKEN,
             HuddlesAdapter,
@@ -118,6 +122,8 @@ def register(ctx):
             install_hint=INSTALL_HINT,
             env_enablement_fn=_env_enablement,
             platform_hint=PLATFORM_HINT,
+            allowed_users_env=ALLOWED_USERS_ENV,
+            allow_all_env=ALLOW_ALL_ENV,
             max_message_length=8000,
             emoji="\U0001f4ac",
         )
@@ -130,6 +136,8 @@ def register(ctx):
             check_fn=check_requirements,
             required_env=[ENV_TOKEN],
             install_hint=INSTALL_HINT,
+            allowed_users_env=ALLOWED_USERS_ENV,
+            allow_all_env=ALLOW_ALL_ENV,
         )
 
     # `hermes huddles join <link>` — a plugin CLI subcommand where the core offers one, so the
