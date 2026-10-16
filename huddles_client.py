@@ -90,7 +90,12 @@ class HuddlesClient:
         handler: Handler | None = None,
         timeout: float = 40.0,
     ) -> None:
-        self._mcp_url = mcp_url.rstrip("/")
+        # `mcp_url` is the full MCP endpoint the invite names (…/external-chat/mcp); the feed
+        # sits beside it. Strip the suffix so a doubled path can never be requested.
+        base = mcp_url.rstrip("/")
+        if base.endswith(MCP_PATH):
+            base = base[: -len(MCP_PATH)]
+        self._mcp_url = base
         self._token = token
         # A real run uses one connection pool for feed and MCP; a test injects a handler.
         if handler is not None:

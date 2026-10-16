@@ -71,24 +71,31 @@ class FakeHuddles:
         return self.handle
 
     def handle(self, request: httpx.Request) -> httpx.Response:
+        # Exact paths: a doubled suffix must fail here, not pass.
         path = request.url.path
-        if path.endswith(WAKES_PATH):
+        if path == f"/api/workspaces/{WORKSPACE}/external-chat/wakes/next":
+            assert path == WAKES_PATH or path.endswith(WAKES_PATH)
             return self._feed(request)
-        if path.endswith(MCP_PATH):
+        if path == f"/api/workspaces/{WORKSPACE}/external-chat/mcp":
             return self._mcp(request)
         if "/join/" in path:
-            return httpx.Response(
-                200,
-                json={
-                    "mcp_url": MCP_URL,
-                    "setup_token": SETUP_TOKEN,
-                    "setup_token_expires_at": "2026-10-15T10:00:00Z",
-                    "participation_id": PARTICIPATION,
-                    "mention": "hermes",
-                    "instructions": "set up",
-                },
-            )
+            return self._invite(request)
         return httpx.Response(404)
+        return httpx.Response(404)
+
+    @staticmethod
+    def _invite(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "mcp_url": MCP_URL,
+                "setup_token": SETUP_TOKEN,
+                "setup_token_expires_at": "2026-10-15T10:00:00Z",
+                "participation_id": PARTICIPATION,
+                "mention": "hermes",
+                "instructions": "set up",
+            },
+        )
 
     def _feed(self, request: httpx.Request) -> httpx.Response:
         self.feed_requests.append(request)
