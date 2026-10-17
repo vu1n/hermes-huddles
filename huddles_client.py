@@ -159,6 +159,19 @@ class HuddlesClient:
             },
         )
 
+    async def post(self, participation_id: str, idempotency_key: str, text: str) -> Json:
+        """Start a new thread in the room without a wake — the sanctioned way to speak when no
+        wake is pending (a late model answer whose wake was already settled, or a retried send,
+        which replays the same `idempotency_key` and folds away)."""
+        return await self._call(
+            "huddles_post",
+            {
+                "participation_id": participation_id,
+                "idempotency_key": idempotency_key,
+                "content": {"format": "plain", "text": text},
+            },
+        )
+
     async def observe(self, participation_id: str, wake_id: str, outcome: str = "no_op") -> Json:
         """Record that the wake was seen without a reply, so viewers are not left waiting."""
         return await self._call(

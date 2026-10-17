@@ -12,7 +12,11 @@ import asyncio
 import logging
 
 from gateway.config import Platform, PlatformConfig
-from gateway.platforms._shared import extra_or_secret, get_scoped_secret
+from gateway.platforms._shared import (
+    extra_or_secret,
+    get_scoped_secret,
+    seed_extra_from_env,
+)
 from gateway.platforms.base import BasePlatformAdapter, SendResult
 from gateway.platforms.event import MessageEvent, MessageType
 from gateway.status import acquire_scoped_lock, release_scoped_lock
@@ -45,6 +49,9 @@ ENV_NO_OP_AFTER = "HUDDLES_NO_OP_AFTER"
 # HUDDLES_ALLOWED_USERS (the platform's only user id is the room itself, "huddles").
 ALLOWED_USERS_ENV = "HUDDLES_ALLOWED_USERS"
 ALLOW_ALL_ENV = "HUDDLES_ALLOW_ALL_USERS"
+#: The huddle chat doubles as the home channel (cron delivery target), so the gateway never
+#: offers /sethome inside a shared room.
+HOME_CHANNEL_ENV = "HUDDLES_HOME_CHANNEL"
 
 #: Room content is discussion, never orders — the line the invite has always carried.
 PLATFORM_HINT = (
@@ -79,7 +86,12 @@ def _env_enablement() -> dict | None:
     participation = get_scoped_secret(ENV_PARTICIPATION, "").strip()
     if not (token and mcp_url and participation):
         return None
-    return {"mcp_url": mcp_url, "participation_id": participation}
+    return {
+        "mcp_url": mcp_url,
+        "participation_id": participation,
+        **seed_extra_from_env((("HUDDLES_NO_OP_AFTER", "no_op_after", int),),
+                              home_env=HOME_CHANNEL_ENV),
+    }
 
 
 class HuddlesAdapter(BasePlatformAdapter):

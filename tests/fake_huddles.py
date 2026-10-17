@@ -139,6 +139,10 @@ class FakeHuddles:
             return self._result(
                 {"duplicate": False, "event_ids": [f"evt_reply_{len(self.calls)}"]}
             )
+        if name == "huddles_post":
+            return self._result(
+                {"duplicate": False, "event_ids": [f"evt_post_{len(self.calls)}"]}
+            )
         if name == "huddles_observe":
             return self._result({"duplicate": False, "event_ids": [f"evt_observe_{len(self.calls)}"]})
         return self._result({}, error=-32602, message="Unknown tool")

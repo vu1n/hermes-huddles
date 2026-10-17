@@ -7,6 +7,7 @@ wires it to the Hermes platform adapter.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import time
 from dataclasses import dataclass
@@ -28,6 +29,10 @@ POLL_TIMEOUT_MARGIN_SECONDS = 15.0
 
 Delay = Callable[[float], Awaitable[None]]
 Now = Callable[[], float]
+
+#: The gateway's own system messages (busy-acks, setup notices) that must never be committed to
+#: a Huddles wake as if the model had answered. The LINE adapter documents these prefixes.
+SYSTEM_PREFIXES = ("\u26a1", "\u23f3", "\u23e9", "\U0001f4be", "\U0001f3e0")
 
 
 @dataclass
@@ -148,14 +153,26 @@ class HuddlesWakeLoop:
             await self.observe(chat_id)
 
     async def send(self, chat_id: str, text: str) -> str | None:
-        """Answer the chat's pending wake with `huddles_reply`; answers with the receipt's
-        event id, or `None` when the chat had no pending wake (or Huddles refused)."""
-        pending = self._pending.pop(chat_id, None)
-        if pending is None:
+        """Answer the chat's pending wake with `huddles_reply`, answering with the receipt's
+        event id.
+
+        A gateway system message (busy-ack, setup notice) is never committed to a wake: it is
+        dropped, so housekeeping cannot pose as the bot's answer or burn the reply slot. A real
+        answer whose wake is already settled falls back to `huddles_post` under a deterministic
+        idempotency key, so the gateway's send retries fold away instead of double-posting."""
+        if text.startswith(SYSTEM_PREFIXES):
+            logger.info("huddles: dropped a gateway system message for %s", chat_id)
             return None
-        if pending.task is not None:
-            pending.task.cancel()
-        receipt = await self._client.reply(chat_id, pending.wake_id, text)
+        pending = self._pending.pop(chat_id, None)
+        if pending is not None:
+            if pending.task is not None:
+                pending.task.cancel()
+            receipt = await self._client.reply(chat_id, pending.wake_id, text)
+            events = receipt.get("event_ids") or []
+            return events[0] if events else None
+        receipt = await self._client.post(
+            chat_id, "post-" + hashlib.sha256(text.encode()).hexdigest()[:24], text
+        )
         events = receipt.get("event_ids") or []
         return events[0] if events else None
 

@@ -94,6 +94,9 @@ def join(invite_link: str, env_path: str | Path | None = None) -> int:
             # The gateway's own user allowlist: Huddles authorizes senders server-side per wake
             # (the room grant), so the plugin admits whatever the feed serves.
             "HUDDLES_ALLOW_ALL_USERS": "1",
+            # The huddle chat is the bot's home channel: cron results land here and the gateway
+            # never offers /sethome inside a shared room.
+            "HUDDLES_HOME_CHANNEL": participation,
         },
     )
     print(f"Joined as @{mention}. Wakes are fetched from Huddles; nothing of yours is exposed.")

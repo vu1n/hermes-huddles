@@ -88,6 +88,7 @@ def register(ctx):
         from .adapter import (
             ALLOW_ALL_ENV,
             ALLOWED_USERS_ENV,
+            HOME_CHANNEL_ENV,
             PLATFORM_HINT,
             ENV_TOKEN,
             HuddlesAdapter,
@@ -124,6 +125,7 @@ def register(ctx):
             platform_hint=PLATFORM_HINT,
             allowed_users_env=ALLOWED_USERS_ENV,
             allow_all_env=ALLOW_ALL_ENV,
+            cron_deliver_env_var=HOME_CHANNEL_ENV,
             max_message_length=8000,
             emoji="\U0001f4ac",
         )

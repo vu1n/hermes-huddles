@@ -120,6 +120,44 @@ def test_a_reply_preempts_the_no_op_finalizer() -> None:
     asyncio.run(run())
 
 
+def test_a_gateway_system_message_is_dropped_instead_of_posted_as_a_reply() -> None:
+    fake = FakeHuddles()
+    fake.queue_wake("wake-1")
+    h = Harness(fake)
+
+    async def run() -> None:
+        await h.loop.poll_once()
+        answer = await h.loop.send("participation-test", "\U0001f3e0 No home channel is set for Huddles.")
+        assert answer is None
+        assert fake.calls_by_name("huddles_reply") == []
+        assert fake.calls_by_name("huddles_post") == []
+        # The wake stays pending: housekeeping must not burn the reply slot.
+        assert h.loop.wake_for("participation-test") == "wake-1"
+        await h.loop.send("participation-test", "real answer")
+        assert len(fake.calls_by_name("huddles_reply")) == 1
+
+    asyncio.run(run())
+
+
+def test_an_answer_with_no_pending_wake_posts_as_a_new_thread_idempotently() -> None:
+    fake = FakeHuddles()
+    h = Harness(fake)
+
+    async def run() -> None:
+        text = "The deploy is green."
+        first = await h.loop.send("participation-test", text)
+        assert first is not None
+        post = fake.calls_by_name("huddles_post")[0]
+        assert post.arguments["content"] == {"format": "plain", "text": text}
+        # The gateway's send retry replays the same content and folds away.
+        await h.loop.send("participation-test", text)
+        posts = fake.calls_by_name("huddles_post")
+        assert len(posts) == 2
+        assert posts[1].arguments["idempotency_key"] == post.arguments["idempotency_key"]
+
+    asyncio.run(run())
+
+
 def test_a_redelivered_wake_is_dropped_until_the_dedup_window_passes() -> None:
     fake = FakeHuddles()
     fake.queue_wake("wake-1")
