@@ -19,7 +19,12 @@ from gateway.platforms._shared import (
 )
 from gateway.platforms.base import BasePlatformAdapter, SendResult
 from gateway.platforms.event import MessageEvent, MessageType
-from gateway.status import acquire_scoped_lock, release_scoped_lock
+from gateway.status import acquire_scoped_lock
+
+try:
+    from gateway.status_scoped_locks import release_scoped_lock
+except ImportError:  # Hermes <= 0.22.2: gateway.status still exported it
+    from gateway.status import release_scoped_lock
 
 try:
     from .huddles_client import HuddlesClient
