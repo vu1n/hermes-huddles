@@ -149,7 +149,7 @@ class HuddlesClient:
     async def reply(self, participation_id: str, wake_id: str, text: str) -> Json:
         """Post the reply for one wake. `idempotency_key` is the `wake_id`, so a retry of the
         same reply folds away instead of posting twice."""
-        return await self._call(
+        return await self._receipt(
             "huddles_reply",
             {
                 "participation_id": participation_id,
@@ -163,7 +163,7 @@ class HuddlesClient:
         """Start a new thread in the room without a wake — the sanctioned way to speak when no
         wake is pending (a late model answer whose wake was already settled, or a retried send,
         which replays the same `idempotency_key` and folds away)."""
-        return await self._call(
+        return await self._receipt(
             "huddles_post",
             {
                 "participation_id": participation_id,
@@ -174,7 +174,7 @@ class HuddlesClient:
 
     async def observe(self, participation_id: str, wake_id: str, outcome: str = "no_op") -> Json:
         """Record that the wake was seen without a reply, so viewers are not left waiting."""
-        return await self._call(
+        return await self._receipt(
             "huddles_observe",
             {
                 "participation_id": participation_id,
@@ -196,7 +196,7 @@ class HuddlesClient:
         bearer = self._token
         self._token = setup_token
         try:
-            return await self._call(
+            return await self._receipt(
                 "huddles_setup",
                 {
                     "participation_id": participation_id,
@@ -206,6 +206,12 @@ class HuddlesClient:
             )
         finally:
             self._token = bearer
+
+    async def _receipt(self, name: str, arguments: Json) -> Json:
+        """A write tool's receipt (`event_ids`, `duplicate`, ...). The server answers it in
+        `structuredContent`; reading the top level instead finds no `event_ids`, which made a
+        landed reply look failed and the gateway's retry post it a second time."""
+        return structured(await self._call(name, arguments))
 
     async def _call(self, name: str, arguments: Json) -> Json:
         body = {
