@@ -1,5 +1,5 @@
 name: huddles
-version: 0.1.5
+version: 0.1.6
 description: "Huddles room participant for Hermes — fetches your wakes from Huddles' pull feed, reads the room over MCP and posts your reply back. No webhook, no tunnel, no hand-edited JSON."
 author: vu1n
 # kind=platform: the adapter module (and httpx) only import when a gateway, cron or

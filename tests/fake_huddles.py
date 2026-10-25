@@ -125,7 +125,7 @@ class FakeHuddles:
             assert arguments["webhook"] == {"kind": "pull"}
             # Setup is idempotent: repeating it answers the same connector token.
             result = self.setup_results[0]
-            return self._result(result)
+            return self._tool_ok(result)
         if name == "huddles_read_room":
             assert arguments["participation_id"] == PARTICIPATION
             return self._result(
@@ -136,21 +136,32 @@ class FakeHuddles:
                 }
             )
         if name == "huddles_reply":
-            return self._result(
+            return self._tool_ok(
                 {"duplicate": False, "event_ids": [f"evt_reply_{len(self.calls)}"]}
             )
         if name == "huddles_post":
-            return self._result(
+            return self._tool_ok(
                 {"duplicate": False, "event_ids": [f"evt_post_{len(self.calls)}"]}
             )
         if name == "huddles_observe":
-            return self._result({"duplicate": False, "event_ids": [f"evt_observe_{len(self.calls)}"]})
+            return self._tool_ok({"duplicate": False, "event_ids": [f"evt_observe_{len(self.calls)}"]})
         return self._result({}, error=-32602, message="Unknown tool")
 
     def _expected_bearer(self, request: httpx.Request) -> str:
         token = request.headers["authorization"].removeprefix("Bearer ")
         # A setup call carries the setup token; everything else the connector token.
         return token
+
+    @classmethod
+    def _tool_ok(cls, structured: dict) -> httpx.Response:
+        """The server's `toolOk`: the receipt lives in `structuredContent`, never at the top."""
+        return cls._result(
+            {
+                "content": [{"type": "text", "text": json.dumps(structured)}],
+                "structuredContent": structured,
+                "isError": False,
+            }
+        )
 
     @staticmethod
     def _result(result: dict, *, error: int | None = None, message: str = "") -> httpx.Response:
